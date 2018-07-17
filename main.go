@@ -11,6 +11,7 @@ import (
 	"github.com/badoux/goscraper"
 	"github.com/dyatlov/go-oembed/oembed"
 	"encoding/json"
+	"strconv"
 )
 
 func metaHandler(w http.ResponseWriter, r *http.Request) {
@@ -25,6 +26,7 @@ func metaHandler(w http.ResponseWriter, r *http.Request) {
 	data, err := ioutil.ReadFile("./providers.json")
 
 	if err != nil {
+		setError("ERROR: No se puede leer providers.json, status: " + err.Error())
 		metaSecondHandler(w, r)
 	}
 
@@ -44,9 +46,12 @@ func metaHandler(w http.ResponseWriter, r *http.Request) {
 	if item != nil {
 		info, err := item.FetchOembed(oembed.Options{URL: url, AcceptLanguage: "es-MX"})
 		if err != nil {
+			setError("ERROR: No se pueden obtener los datos desde oembed, status: " + err.Error())
 			metaSecondHandler(w, r)
 		} else {
 			if info.Status >= 300 {
+				code := strconv.Itoa(info.Status)
+				setError("ERROR: No se pueden obtener los datos desde url, status: " + code)
 				metaSecondHandler(w, r)
 			} else {
 				w.WriteHeader(http.StatusOK)
@@ -55,6 +60,7 @@ func metaHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	} else {
+		setError("ERROR: no se encuentra el item en oembed")
 		metaSecondHandler(w, r)
 	}
 }
@@ -71,6 +77,7 @@ func metaSecondHandler(w http.ResponseWriter, r *http.Request) {
 	keys := r.URL.Query()["u"]
 	s, err := goscraper.Scrape(keys[0], 5)
 	if err != nil {
+		setError("ERROR: No se puede generar la vista, status: " + err.Error())
 		http.Error(w, "can't generate preview", http.StatusBadRequest)
 		return
 	}
@@ -93,11 +100,19 @@ func main() {
 	http.ListenAndServe(GetPort(), nil)
 }
 
+func setError(error string) {
+	var dev = os.Getenv("APP_ENV")
+	if dev == "local" {
+		fmt.Println(error)
+	}
+}
+
 func GetPort() string {
 	var port = os.Getenv("PORT")
 	if port == "" {
 		port = "4747"
-		fmt.Println("INFO: No PORT environment variable detected, defaulting to " + port)
+		setError("INFO: No PORT environment variable detected, defaulting to " + port)
 	}
+	fmt.Println("Escuchando el puerto: " + port)
 	return ":" + port
 }
