@@ -35,7 +35,7 @@
     "html/charset",
   ]
   pruneopts = "UT"
-  revision = "a45b4abe13d2d168ea021b6ec8d8798fe33a7cc9"
+  revision = "d0887baf81f4598189d4e12a37c6da86f0bba4d0"
 
 [[projects]]
   digest = "1:00b52d21f87065cee85096f07ba40957cc53719145c224da5f5d113669868213"
